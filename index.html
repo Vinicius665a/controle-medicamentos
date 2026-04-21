@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meus Medicamentos</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-info: #E6F1FB;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b66;
+      --text-info: #185FA5;
+      --border-light: rgba(0,0,0,0.12);
+      --border-medium: rgba(0,0,0,0.22);
+      --border-info: #378ADD;
+      --green-bg: #E1F5EE;
+      --green-dark: #085041;
+      --green-mid: #9FE1CB;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1c;
+        --bg-secondary: #2a2a28;
+        --bg-info: #0c447c;
+        --text-primary: #f0ede8;
+        --text-secondary: #9a9a94;
+        --text-info: #85B7EB;
+        --border-light: rgba(255,255,255,0.12);
+        --border-medium: rgba(255,255,255,0.22);
+        --green-bg: #04342C;
+        --green-dark: #9FE1CB;
+        --green-mid: #1D9E75;
+      }
+    }
+    body { font-family: var(--font); background: var(--bg-secondary); color: var(--text-primary); min-height: 100vh; display: flex; justify-content: center; padding: 1rem; }
+    .app { width: 100%; max-width: 440px; }
+    .header { text-align: center; padding: 1.5rem 0 1rem; border-bottom: 0.5px solid var(--border-light); margin-bottom: 1.5rem; }
+    .header h1 { font-size: 22px; font-weight: 500; }
+    .header p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+    .tab { flex: 1; padding: 8px; font-size: 14px; font-weight: 500; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; font-family: var(--font); }
+    .tab.active { background: var(--bg-info); color: var(--text-info); border-color: var(--border-info); }
+    .tab:hover:not(.active) { background: var(--bg-secondary); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .med-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+    .med-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .med-icon.blue   { background: #E6F1FB; }
+    .med-icon.green  { background: #EAF3DE; }
+    .med-icon.amber  { background: #FAEEDA; }
+    .med-icon.coral  { background: #FAECE7; }
+    .med-info { flex: 1; min-width: 0; }
+    .med-name { font-size: 15px; font-weight: 500; }
+    .med-dose { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .med-times { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .time-badge { font-size: 12px; padding: 3px 10px; border-radius: 20px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-light); }
+    .btn-icon { width: 30px; height: 30px; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); font-family: var(--font); }
+    .btn-icon:hover { background: var(--bg-secondary); }
+    .add-btn { width: 100%; padding: 10px; border: 0.5px dashed var(--border-medium); border-radius: var(--radius-lg); background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; margin-top: 4px; font-family: var(--font); }
+    .add-btn:hover { background: var(--bg-secondary); }
+    .form-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+    .form-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+    .field input, .field select { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); font-family: var(--font); }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--border-info); box-shadow: 0 0 0 2px rgba(55,138,221,0.15); }
+    .search-row { display: flex; gap: 8px; }
+    .search-row input { flex: 1; padding: 8px 12px; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); font-family: var(--font); }
+    .search-row button { padding: 0 14px; height: 36px; border: 0.5px solid var(--border-info); border-radius: var(--radius-md); background: var(--bg-info); color: var(--text-info); font-size: 13px; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+    .search-row button:hover { opacity: 0.85; }
+    .fda-result { margin-top: 10px; background: var(--bg-secondary); border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 10px 12px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .fda-result strong { color: var(--text-primary); font-weight: 500; display: block; margin-bottom: 4px; }
+    .fda-result.loading { color: var(--text-secondary); font-style: italic; }
+    .fda-result.error { color: #D85A30; border-color: #F0997B; }
+    .add-time { display: flex; gap: 8px; align-items: center; }
+    .add-time input[type="time"] { flex: 1; padding: 8px 12px; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); font-family: var(--font); }
+    .add-time button { padding: 0 14px; height: 36px; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); font-size: 13px; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+    .add-time button:hover { background: var(--bg-secondary); }
+    .time-inputs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .time-tag { display: flex; align-items: center; gap: 6px; background: var(--bg-secondary); border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 4px 10px; font-size: 13px; color: var(--text-primary); }
+    .time-tag span { cursor: pointer; color: var(--text-secondary); font-size: 12px; }
+    .time-tag span:hover { color: #D85A30; }
+    .save-btn { width: 100%; padding: 10px; background: var(--bg-info); color: var(--text-info); border: 0.5px solid var(--border-info); border-radius: var(--radius-md); font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); }
+    .save-btn:hover { opacity: 0.85; }
+    .alarm-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+    .alarm-header { display: flex; align-items: center; justify-content: space-between; }
+    .alarm-time { font-size: 28px; font-weight: 500; letter-spacing: -0.5px; }
+    .alarm-toggle { width: 42px; height: 24px; border-radius: 12px; background: var(--bg-secondary); border: 0.5px solid var(--border-medium); position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+    .alarm-toggle.on { background: #1D9E75; border-color: #1D9E75; }
+    .alarm-toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: left 0.2s; }
+    .alarm-toggle.on::after { left: 22px; }
+    .alarm-meds { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); font-size: 14px; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green-dark); color: var(--green-mid); border-radius: var(--radius-md); padding: 10px 20px; font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 999; font-family: var(--font); }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Meus medicamentos</h1>
+    <p id="today-date"></p>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('lista')">Medicamentos</button>
+    <button class="tab" onclick="showTab('adicionar')">+ Adicionar</button>
+    <button class="tab" onclick="showTab('alarmes')">Alarmes</button>
+  </div>
+
+  <!-- Lista -->
+  <div id="panel-lista" class="panel active">
+    <div id="med-list"></div>
+    <button class="add-btn" onclick="showTab('adicionar')">+ Cadastrar novo medicamento</button>
+  </div>
+
+  <!-- Adicionar -->
+  <div id="panel-adicionar" class="panel">
+    <div class="form-card">
+      <h3>Novo medicamento</h3>
+      <div class="field">
+        <label>Nome do medicamento</label>
+        <input type="text" id="f-name" placeholder="Ex: Losartana" />
+      </div>
+
+      <!-- Busca OpenFDA -->
+      <div class="field">
+        <label>Buscar informações na base FDA (opcional)</label>
+        <div class="search-row">
+          <input type="text" id="fda-query" placeholder="Ex: losartan, metformin..." />
+          <button onclick="searchFDA()" id="fda-btn">Buscar</button>
+        </div>
+        <div class="fda-result" id="fda-result" style="display:none"></div>
+      </div>
+
+      <div class="field">
+        <label>Dose</label>
+        <input type="text" id="f-dose" placeholder="Ex: 1 comprimido" />
+      </div>
+      <div class="field">
+        <label>Cor do ícone</label>
+        <select id="f-color">
+          <option value="blue">Azul</option>
+          <option value="green">Verde</option>
+          <option value="amber">Amarelo</option>
+          <option value="coral">Laranja</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Horários</label>
+        <div class="add-time">
+          <input type="time" id="f-time" value="08:00" />
+          <button onclick="addTime()">+ Horário</button>
+        </div>
+        <div class="time-inputs" id="time-tags"></div>
+      </div>
+      <button class="save-btn" onclick="saveMed()">Salvar medicamento</button>
+    </div>
+  </div>
+
+  <!-- Alarmes -->
+  <div id="panel-alarmes" class="panel">
+    <div id="alarm-list"></div>
+    <div class="empty-state" id="alarm-empty" style="display:none">Nenhum alarme cadastrado ainda.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ICONS = { blue: '💊', green: '🌿', amber: '⭐', coral: '🔴' };
+
+let meds = [
+  { id: 1, name: 'Losartana 50mg',    dose: '1 comprimido', color: 'blue',  times: ['07:00', '19:00'] },
+  { id: 2, name: 'Metformina 850mg',  dose: '1 comprimido', color: 'green', times: ['12:00'] },
+  { id: 3, name: 'Sinvastatina 20mg', dose: '1 comprimido', color: 'amber', times: ['21:00'] },
+];
+
+let alarms = {};
+let pendingTimes = [];
+let nextId = 10;
+
+function showTab(tab) {
+  const tabNames = ['lista', 'adicionar', 'alarmes'];
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', tabNames[i] === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'alarmes') renderAlarms();
+  if (tab === 'lista')   renderList();
+}
+
+function renderList() {
+  const el = document.getElementById('med-list');
+  if (!meds.length) { el.innerHTML = '<div class="empty-state">Nenhum medicamento cadastrado.</div>'; return; }
+  el.innerHTML = meds.map(m => `
+    <div class="med-card">
+      <div class="med-icon ${m.color}">${ICONS[m.color]}</div>
+      <div class="med-info">
+        <div class="med-name">${m.name}</div>
+        <div class="med-dose">${m.dose}</div>
+        <div class="med-times">${m.times.map(t => `<span class="time-badge">${t}</span>`).join('')}</div>
+      </div>
+      <button class="btn-icon" onclick="deleteMed(${m.id})" title="Remover">✕</button>
+    </div>`).join('');
+}
+
+function deleteMed(id) {
+  if (!confirm('Remover este medicamento?')) return;
+  meds = meds.filter(m => m.id !== id);
+  renderList();
+  toast('Medicamento removido');
+}
+
+/* --- OpenFDA Integration --- */
+async function searchFDA() {
+  const query = document.getElementById('fda-query').value.trim();
+  if (!query) return;
+  const resultEl = document.getElementById('fda-result');
+  const btn = document.getElementById('fda-btn');
+  resultEl.style.display = 'block';
+  resultEl.className = 'fda-result loading';
+  resultEl.innerHTML = 'Buscando informações...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(
+      `https://api.fda.gov/drug/label.json?search=openfda.brand_name:"${encodeURIComponent(query)}"&limit=1`
+    );
+    if (!res.ok) throw new Error('not_found');
+    const data = await res.json();
+    const result = data.results[0];
+    const purpose   = result.purpose?.[0]        || result.indications_and_usage?.[0] || null;
+    const warnings  = result.warnings?.[0]        || null;
+    const brandName = result.openfda?.brand_name?.[0] || query;
+    let html = `<strong>${brandName}</strong>`;
+    if (purpose)  html += `<span>${truncate(purpose, 200)}</span>`;
+    if (warnings) html += `<span style="margin-top:6px;display:block;color:#BA7517">⚠ ${truncate(warnings, 150)}</span>`;
+    resultEl.className = 'fda-result';
+    resultEl.innerHTML = html;
+    if (!document.getElementById('f-name').value) {
+      document.getElementById('f-name').value = brandName;
+    }
+  } catch {
+    resultEl.className = 'fda-result error';
+    resultEl.innerHTML = 'Nenhuma informação encontrada para este medicamento.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max) + '...' : str;
+}
+
+/* --- Formulário --- */
+function addTime() {
+  const t = document.getElementById('f-time').value;
+  if (!t || pendingTimes.includes(t)) return;
+  pendingTimes.push(t);
+  renderTimeTags();
+}
+
+function removeTime(t) {
+  pendingTimes = pendingTimes.filter(x => x !== t);
+  renderTimeTags();
+}
+
+function renderTimeTags() {
+  document.getElementById('time-tags').innerHTML =
+    pendingTimes.map(t => `<div class="time-tag">${t} <span onclick="removeTime('${t}')">✕</span></div>`).join('');
+}
+
+function saveMed() {
+  const name  = document.getElementById('f-name').value.trim();
+  const dose  = document.getElementById('f-dose').value.trim();
+  const color = document.getElementById('f-color').value;
+  if (!name)               { toast('Informe o nome do medicamento'); return; }
+  if (!pendingTimes.length){ toast('Adicione pelo menos um horário'); return; }
+  meds.push({ id: nextId++, name, dose: dose || '1 unidade', color, times: [...pendingTimes].sort() });
+  pendingTimes = [];
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-dose').value = '';
+  document.getElementById('fda-result').style.display = 'none';
+  document.getElementById('fda-query').value = '';
+  renderTimeTags();
+  toast('Medicamento salvo!');
+  showTab('lista');
+}
+
+/* --- Alarmes --- */
+function renderAlarms() {
+  const all = [];
+  meds.forEach(m => m.times.forEach(t => all.push({ time: t, med: m })));
+  all.sort((a, b) => a.time.localeCompare(b.time));
+  const grouped = {};
+  all.forEach(({ time, med }) => { if (!grouped[time]) grouped[time] = []; grouped[time].push(med.name); });
+  const keys = Object.keys(grouped);
+  const emEl   = document.getElementById('alarm-empty');
+  const listEl = document.getElementById('alarm-list');
+  if (!keys.length) { listEl.innerHTML = ''; emEl.style.display = 'block'; return; }
+  emEl.style.display = 'none';
+  listEl.innerHTML = keys.map(t => {
+    const key = 'alarm_' + t.replace(':', '');
+    if (alarms[key] === undefined) alarms[key] = true;
+    return `<div class="alarm-card">
+      <div class="alarm-header">
+        <div class="alarm-time">${t}</div>
+        <div class="alarm-toggle ${alarms[key] ? 'on' : ''}" id="${key}" onclick="toggleAlarm('${key}')"></div>
+      </div>
+      <div class="alarm-meds">${grouped[t].join(' · ')}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAlarm(key) {
+  alarms[key] = !alarms[key];
+  document.getElementById(key).classList.toggle('on', alarms[key]);
+  toast(alarms[key] ? 'Alarme ativado' : 'Alarme desativado');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+const days   = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const now = new Date();
+document.getElementById('today-date').textContent =
+  `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]}`;
+
+renderList();
+</script>
+</body>
+</html>
